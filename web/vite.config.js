@@ -18,11 +18,12 @@ export default defineConfig({
     },
     test: {
         environment: "jsdom",
-        include: ["tests/**/*.test.js"],
+        include: ["tests/{unitarias,componentes}/**/*.test.js"],
         setupFiles: ["tests/setup.js"],
         coverage: {
             provider: "v8",
             reporter: ["text", "html", "json-summary"],
+            reportsDirectory: "../evidencias/coverage/web",
             include: ["src/**"],
             exclude: ["src/main.js"],
             thresholds: {

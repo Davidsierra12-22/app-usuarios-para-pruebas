@@ -58,6 +58,21 @@ describe("Integración: Endpoints de Usuarios (/api/usuarios)", () => {
       expect(errLimite).toBeDefined();
     });
 
+    it("rechaza una página menor que 1 y un rol no permitido", async () => {
+      const token = await tokenAdmin();
+      const pagina = await request(app)
+        .get("/api/usuarios?pagina=0")
+        .set("x-token", token);
+      const rol = await request(app)
+        .get("/api/usuarios?rol=superadmin")
+        .set("x-token", token);
+
+      expect(pagina.status).toBe(400);
+      expect(pagina.body.errores.some((error) => error.path === "pagina")).toBe(true);
+      expect(rol.status).toBe(400);
+      expect(rol.body.errores.some((error) => error.path === "rol")).toBe(true);
+    });
+
     it("GET /?buscar=ana&rol=usuario responde 200 con búsqueda por nombre o email combinada con filtro de rol", async () => {
       await crearUsuario({ nombre: "Ana Gomez", email: "ana.gomez@demo.com", rol: "usuario" });
       await crearUsuario({ nombre: "Ana Admin", email: "ana.admin@demo.com", rol: "admin" });
@@ -104,12 +119,39 @@ describe("Integración: Endpoints de Usuarios (/api/usuarios)", () => {
       expect(res.status).toBe(200);
       expect(res.body).toBeDefined();
     });
+
+    it("no expone usuarios desactivados y responde 404", async () => {
+      const usuario = await crearUsuario({ estado: false });
+      const token = await tokenAdmin();
+
+      const res = await request(app)
+        .get(`/api/usuarios/${usuario.id}`)
+        .set("x-token", token);
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe("Usuario no encontrado");
+    });
   });
 
   // ------------------------------------------------------------
   // POST /api/usuarios
   // ------------------------------------------------------------
   describe("POST /api/usuarios", () => {
+    it("rechaza la creación si el token pertenece a un usuario estándar", async () => {
+      const token = await tokenUsuario();
+      const res = await request(app)
+        .post("/api/usuarios")
+        .set("x-token", token)
+        .send({
+          nombre: "Intento no autorizado",
+          email: "intento@demo.com",
+          password: "Password123!",
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe("No tiene permisos para esto");
+    });
+
     it("Admin crea usuario: responde 201 y la contraseña queda hasheada en la base de datos", async () => {
       const token = await tokenAdmin();
       const passwordOriginal = "PasswordCreada123!";
@@ -139,6 +181,35 @@ describe("Integración: Endpoints de Usuarios (/api/usuarios)", () => {
   // PUT /api/usuarios/:id
   // ------------------------------------------------------------
   describe("PUT /api/usuarios/:id", () => {
+    it("actualiza un usuario y hashea la nueva contraseña", async () => {
+      const usuario = await crearUsuario({ password: "PasswordOriginal123!" });
+      const token = await tokenAdmin();
+      const nuevaPassword = "PasswordNueva456!";
+
+      const res = await request(app)
+        .put(`/api/usuarios/${usuario.id}`)
+        .set("x-token", token)
+        .send({ nombre: "Nombre actualizado", password: nuevaPassword });
+
+      expect(res.status).toBe(200);
+      expect(res.body.nombre).toBe("Nombre actualizado");
+      expect(res.body.password).toBeUndefined();
+      const actualizado = await Usuario.findById(usuario.id);
+      expect(actualizado.password).not.toBe(nuevaPassword);
+      expect(actualizado.validarPassword(nuevaPassword)).toBe(true);
+    });
+
+    it("responde 404 al actualizar un usuario inexistente", async () => {
+      const token = await tokenAdmin();
+      const res = await request(app)
+        .put("/api/usuarios/60c72b2f9b1d8b001c8e4d2a")
+        .set("x-token", token)
+        .send({ nombre: "Sin usuario" });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe("Usuario no encontrado");
+    });
+
     it("Admin intenta cambiar su propio rol responde 400 ('No puedes cambiar tu propio rol')", async () => {
       // Creamos un admin específico
       const adminPropio = await crearUsuario({
@@ -190,6 +261,16 @@ describe("Integración: Endpoints de Usuarios (/api/usuarios)", () => {
   // DELETE /api/usuarios/:id
   // ------------------------------------------------------------
   describe("DELETE /api/usuarios/:id", () => {
+    it("responde 404 al eliminar un usuario inexistente", async () => {
+      const token = await tokenAdmin();
+      const res = await request(app)
+        .delete("/api/usuarios/60c72b2f9b1d8b001c8e4d2a")
+        .set("x-token", token);
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe("Usuario no encontrado");
+    });
+
     it("Admin intenta eliminarse a sí mismo responde 400 ('No puedes eliminar tu propia cuenta')", async () => {
       const adminPropio = await crearUsuario({
         nombre: "Admin Autodestructivo",

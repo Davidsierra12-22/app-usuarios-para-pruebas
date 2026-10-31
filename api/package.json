@@ -10,23 +10,26 @@
     "seed": "node database/seed.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:unitarias": "vitest run tests/unitarias",
+    "test:componentes": "vitest run tests/componentes",
+    "test:e2e": "vitest run tests/e2e",
     "coverage": "vitest run --coverage"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "@vitest/coverage-v8": "^5.0.5",
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.6.1",
     "express": "^4.22.3",
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.24.5",
-    "vitest": "^5.0.5"
+    "mongoose": "^8.24.5"
   },
   "devDependencies": {
-    "mongodb-memory-server": "^11.3.0",
-    "supertest": "^7.3.1"
+    "@vitest/coverage-v8": "^5.0.5",
+    "mongodb-memory-server-core": "^11.3.0",
+    "supertest": "^7.3.1",
+    "vitest": "^5.0.5"
   }
 }

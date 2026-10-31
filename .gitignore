@@ -12,8 +12,14 @@ playwright-report/
 test-results/
 .testsprite/
 testsprite_tests/
+web/tests/e2e/.auth/
 
 # Compilación y temporales
 dist/
 *.log
 .DS_Store
+
+# Los reportes y capturas solicitados por el taller sí se entregan.
+!evidencias/
+!evidencias/**
+evidencias/playwright/test-results/
