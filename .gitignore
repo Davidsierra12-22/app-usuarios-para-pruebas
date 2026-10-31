@@ -1,0 +1,19 @@
+# Dependencias
+node_modules/
+
+# Entorno y credenciales (¡Nunca subir claves o .env!)
+.env
+.env.*
+!.env.example
+
+# Reportes temporales generados (las evidencias van en /evidencias)
+coverage/
+playwright-report/
+test-results/
+.testsprite/
+testsprite_tests/
+
+# Compilación y temporales
+dist/
+*.log
+.DS_Store

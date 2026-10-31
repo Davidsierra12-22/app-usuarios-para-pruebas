@@ -1,28 +1,24 @@
-
-
 // ============================================================
 // 🔐 App de usuarios — API con autenticación JWT y CRUD de usuarios
 // Estructura MVC:
 //   app.js · database/ · models/ · routes/ · controllers/ · middlewares/ · helpers/
-// Ejecutar: npm run dev
-// Requiere .env con PUERTO, MONGODB_CNX y JWT_SECRET (ver .env.example)
 // ============================================================
 
 import "dotenv/config";
 import express from "express";
-import { dbConnection } from "./database/config.js";
-import { crearAdminInicial } from "./database/seed.js";
 import authRouter from "./routes/auth.js";
 import usuariosRouter from "./routes/usuarios.js";
 
 const app = express();
 
-// 1. Logger de peticiones
-app.use((req, res, next) => {
-  const hora = new Date().toLocaleTimeString();
-  console.log(`[${hora}] ${req.method} ${req.url}`);
-  next();
-});
+// 1. Logger de peticiones (solo si no estamos en entorno de test para mantener la salida limpia)
+if (process.env.NODE_ENV !== "test") {
+  app.use((req, res, next) => {
+    const hora = new Date().toLocaleTimeString();
+    console.log(`[${hora}] ${req.method} ${req.url}`);
+    next();
+  });
+}
 
 // 2. Body JSON
 app.use(express.json());
@@ -58,22 +54,4 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Error interno" });
 });
 
-// La BD primero, el servidor después
-dbConnection()
-  .then(async () => {
-    const admin = await crearAdminInicial();
-    if (admin) console.log(`Administrador inicial creado: ${admin.email}`);
-
-    const puerto = process.env.PUERTO ?? 3000;
-    app
-      .listen(puerto, () => {
-        console.log(`API en http://localhost:${puerto}/api`);
-      })
-      .on("error", (error) => {
-        console.log(`No se pudo usar el puerto ${puerto}:`, error.message);
-        process.exit(1);
-      });
-  })
-  .catch((error) => {
-    console.log("No se pudo iniciar:", error.message);
-  });
+export default app;

@@ -18,13 +18,19 @@ export default defineConfig({
     },
     test: {
         environment: "jsdom",
-        include: ["test/**/*.test.js"],
-        setupFiles: ["test/setup.js"],
+        include: ["tests/**/*.test.js"],
+        setupFiles: ["tests/setup.js"],
         coverage: {
             provider: "v8",
-            reporter: ["text","html"],
+            reporter: ["text", "html", "json-summary"],
             include: ["src/**"],
-            exclude: ["src/main.js"]
+            exclude: ["src/main.js"],
+            thresholds: {
+                lines: 80,
+                functions: 80,
+                statements: 80,
+                branches: 70,
+            },
         },
-    }
+    },
 })

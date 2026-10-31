@@ -20,7 +20,7 @@ function clearSession() {
     tokenStorage.clear()
     state.token = null
     state.user = null
-    state.loaded = true
+    state.loaded = false
 }
 
 export function useAuth() {
@@ -42,6 +42,7 @@ export function useAuth() {
     /** Recupera el usuario del token guardado (al recargar la página). */
     async function restoreSession() {
         if (state.loaded) return
+        state.token = tokenStorage.get()
         if (!state.token) {
             state.loaded = true
             return
